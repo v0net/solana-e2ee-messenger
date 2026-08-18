@@ -1,0 +1,409 @@
+{
+  "address": "EN2XfSXoZWvupiaUsnz86ENiXcs3ETSGAoLrAZ9DtTUQ",
+  "metadata": {
+    "name": "solana_messenger",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "close_chat",
+      "discriminator": [182, 227, 125, 158, 213, 132, 147, 192],
+      "accounts": [
+        {
+          "name": "chat",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 104, 97, 116]
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant1",
+                "account": "Chat"
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant2",
+                "account": "Chat"
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_chat",
+      "discriminator": [4, 81, 179, 155, 220, 138, 192, 182],
+      "accounts": [
+        {
+          "name": "chat",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 104, 97, 116]
+              },
+              {
+                "kind": "account",
+                "path": "participant1"
+              },
+              {
+                "kind": "account",
+                "path": "participant2"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "participant1"
+        },
+        {
+          "name": "participant2"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "send_message",
+      "discriminator": [57, 40, 34, 178, 189, 10, 65, 26],
+      "accounts": [
+        {
+          "name": "chat",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 104, 97, 116]
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant1",
+                "account": "Chat"
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant2",
+                "account": "Chat"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "content",
+          "type": "bytes"
+        },
+        {
+          "name": "nonce",
+          "type": {
+            "array": ["u8", 24]
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_encryption_key",
+      "discriminator": [60, 95, 22, 80, 124, 130, 247, 92],
+      "accounts": [
+        {
+          "name": "chat",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 104, 97, 116]
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant1",
+                "account": "Chat"
+              },
+              {
+                "kind": "account",
+                "path": "chat.participant2",
+                "account": "Chat"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "encryption_key",
+          "type": {
+            "array": ["u8", 32]
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Chat",
+      "discriminator": [170, 4, 71, 128, 185, 103, 250, 177]
+    }
+  ],
+  "events": [
+    {
+      "name": "ChatClosed",
+      "discriminator": [72, 62, 142, 6, 154, 117, 93, 196]
+    },
+    {
+      "name": "ChatInitialized",
+      "discriminator": [250, 140, 100, 13, 242, 91, 68, 49]
+    },
+    {
+      "name": "EncryptionKeySet",
+      "discriminator": [225, 154, 6, 243, 49, 50, 145, 120]
+    },
+    {
+      "name": "MessageSent",
+      "discriminator": [116, 70, 224, 76, 128, 28, 110, 55]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: You are not a participant in this chat."
+    },
+    {
+      "code": 6001,
+      "name": "EncryptionKeysNotSet",
+      "msg": "Encryption keys must be set for both users before sending messages."
+    },
+    {
+      "code": 6002,
+      "name": "DuplicateEncryptionKey",
+      "msg": "Encryption key must be unique per participant."
+    },
+    {
+      "code": 6003,
+      "name": "EncryptionKeyAlreadySet",
+      "msg": "Encryption key is already set for this participant."
+    },
+    {
+      "code": 6004,
+      "name": "ChatFull",
+      "msg": "Chat message storage is full."
+    },
+    {
+      "code": 6005,
+      "name": "MessageTooLong",
+      "msg": "Message content exceeds maximum allowed length."
+    }
+  ],
+  "types": [
+    {
+      "name": "Chat",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant1",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant2",
+            "type": "pubkey"
+          },
+          {
+            "name": "payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant1_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "participant2_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "messages",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Message"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChatClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant1",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant2",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChatInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant1",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant2",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EncryptionKeySet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant1",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant2",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant1_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "participant2_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Message",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sender",
+            "type": "u8"
+          },
+          {
+            "name": "content",
+            "type": "bytes"
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": ["u8", 24]
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MessageSent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant1",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant2",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant1_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "participant2_encryption_key",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "defined": {
+                "name": "Message"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
