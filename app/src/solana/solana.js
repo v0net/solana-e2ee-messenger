@@ -50,6 +50,37 @@ function getUserSigningPublicKey() {
   return userSigningKeyPair.publicKey.toBase58();
 }
 
+function encryptWithSharedKey(content) {
+  if (!chatSharedKey) throw new Error("An error occurred");
+  const contentUint8 = naclUtil.decodeUTF8(content);
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+  const encryptedContent = nacl.box.after(contentUint8, nonce, chatSharedKey);
+  return {
+    encryptedContent: encryptedContent,
+    nonce: nonce,
+  };
+}
+
+function decryptWithSharedKey(encryptedContent, nonce, sharedKey = null) {
+  if (!chatSharedKey && !sharedKey) throw new Error("An error occurred");
+  const key = sharedKey || chatSharedKey;
+  const contentUint8 =
+    encryptedContent instanceof Uint8Array
+      ? encryptedContent
+      : new Uint8Array(encryptedContent);
+  const nonceUint8 =
+    nonce instanceof Uint8Array ? nonce : new Uint8Array(nonce);
+  const keyUint8 = key instanceof Uint8Array ? key : new Uint8Array(key);
+  const decryptedContentUint8 = nacl.box.open.after(
+    contentUint8,
+    nonceUint8,
+    keyUint8,
+  );
+  return decryptedContentUint8
+    ? naclUtil.encodeUTF8(decryptedContentUint8)
+    : null;
+}
+
 async function encryptWithPassword(content, password) {
   const salt = nacl.randomBytes(16);
   const derivedKey = await argon2.hash({
@@ -138,6 +169,8 @@ export {
   getUserSigningPublicKey,
   encryptWithPassword,
   decryptWithPassword,
+  encryptWithSharedKey,
+  decryptWithSharedKey,
   initializeKeysFromMnemonic,
   verifyPassword,
   areKeysInitialized,
