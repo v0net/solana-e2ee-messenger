@@ -45,121 +45,59 @@ function isValidPublicKey(publicKeyString) {
   }
 }
 
-function getUserSigningPublicKey() {
-  if (!userSigningKeyPair) throw new Error("An error occurred");
-  return userSigningKeyPair.publicKey.toBase58();
-}
+function initializeData() {
+  const rpcUrl = process.env.REACT_APP_RPC_URL || "http://127.0.0.1:8899";
+  const connection = new Connection(rpcUrl, "confirmed");
 
-function encryptWithSharedKey(content) {
-  if (!chatSharedKey) throw new Error("An error occurred");
-  const contentUint8 = naclUtil.decodeUTF8(content);
-  const nonce = nacl.randomBytes(nacl.box.nonceLength);
-  const encryptedContent = nacl.box.after(contentUint8, nonce, chatSharedKey);
-  return {
-    encryptedContent: encryptedContent,
-    nonce: nonce,
-  };
-}
-
-function decryptWithSharedKey(encryptedContent, nonce, sharedKey = null) {
-  if (!chatSharedKey && !sharedKey) throw new Error("An error occurred");
-  const key = sharedKey || chatSharedKey;
-  const contentUint8 =
-    encryptedContent instanceof Uint8Array
-      ? encryptedContent
-      : new Uint8Array(encryptedContent);
-  const nonceUint8 =
-    nonce instanceof Uint8Array ? nonce : new Uint8Array(nonce);
-  const keyUint8 = key instanceof Uint8Array ? key : new Uint8Array(key);
-  const decryptedContentUint8 = nacl.box.open.after(
-    contentUint8,
-    nonceUint8,
-    keyUint8,
-  );
-  return decryptedContentUint8
-    ? naclUtil.encodeUTF8(decryptedContentUint8)
-    : null;
-}
-
-async function encryptWithPassword(content, password) {
-  const salt = nacl.randomBytes(16);
-  const derivedKey = await argon2.hash({
-    pass: password,
-    salt: salt,
-    time: 3,
-    mem: 65536,
-    hashLen: nacl.secretbox.keyLength,
-    parallelism: 4,
-    type: argon2.ArgonType.Argon2id,
+  const wallet = new Wallet(userSigningKeyPair);
+  const provider = new anchor.AnchorProvider(connection, wallet, {
+    commitment: "confirmed",
   });
-  const contentUint8 = naclUtil.decodeUTF8(content);
-  const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-  const encryptedContent = nacl.secretbox(contentUint8, nonce, derivedKey.hash);
+  anchor.setProvider(provider);
 
-  return {
-    encryptedContent: naclUtil.encodeBase64(encryptedContent),
-    salt: naclUtil.encodeBase64(salt),
-    nonce: naclUtil.encodeBase64(nonce),
-  };
+  program = new anchor.Program(idl);
+
+  if (rpcUrl.includes("127.0.0.1") || rpcUrl.includes("localhost")) {
+    connection
+      .getBalance(userSigningKeyPair.publicKey)
+      .then((balance) => {
+        if (balance < 1e9) {
+          connection
+            .requestAirdrop(userSigningKeyPair.publicKey, 10e9)
+            .catch((err) => {
+              console.warn("Local development airdrop failed:", err.message);
+            });
+        }
+      })
+      .catch(() => {});
+  }
 }
 
-async function decryptWithPassword(encryptedContent, salt, nonce, password) {
-  const saltUint8 = naclUtil.decodeBase64(salt);
-  const derivedKey = await argon2.hash({
-    pass: password,
-    salt: saltUint8,
-    time: 3,
-    mem: 65536,
-    hashLen: nacl.secretbox.keyLength,
-    parallelism: 4,
-    type: argon2.ArgonType.Argon2id,
-  });
-  const encryptedContentUint8 = naclUtil.decodeBase64(encryptedContent);
-  const nonceUint8 = naclUtil.decodeBase64(nonce);
-
-  const decryptedContentUint8 = nacl.secretbox.open(
-    encryptedContentUint8,
-    nonceUint8,
-    derivedKey.hash,
-  );
-  return decryptedContentUint8
-    ? naclUtil.encodeUTF8(decryptedContentUint8)
-    : null;
-}
-
-function initializeKeysFromMnemonic(mnemonic) {
-  const seed = bip39.mnemonicToSeedSync(mnemonic.join(" "));
-  const derivedSigningKey = derivePath(
-    "m/44'/501'/0'/0'",
-    seed.toString("hex"),
-  ).key;
-  const derivedEncryptionKey = derivePath(
-    "m/44'/501'/0'/1'",
-    seed.toString("hex"),
-  ).key;
-  userSigningKeyPair = Keypair.fromSeed(new Uint8Array(derivedSigningKey));
-  userEncryptionKeyPair = nacl.box.keyPair.fromSecretKey(
-    new Uint8Array(derivedEncryptionKey),
+function initializeChatData(peerPublicKeyString) {
+  if (!userSigningKeyPair || !program) throw new Error("An error occurred");
+  peerSigningPublicKey = new PublicKey(peerPublicKeyString);
+  const [participant1, participant2] =
+    Buffer.compare(
+      userSigningKeyPair.publicKey.toBuffer(),
+      peerSigningPublicKey.toBuffer(),
+    ) < 0
+      ? [userSigningKeyPair.publicKey, peerSigningPublicKey]
+      : [peerSigningPublicKey, userSigningKeyPair.publicKey];
+  [chatPDA] = PublicKey.findProgramAddressSync(
+    [Buffer.from("chat"), participant1.toBuffer(), participant2.toBuffer()],
+    program.programId,
   );
 }
 
-async function verifyPassword(password) {
-  const { encryptedContent, salt, nonce } = JSON.parse(
-    localStorage.getItem("encryptedMnemonic"),
-  );
-  const mnemonic = await decryptWithPassword(
-    encryptedContent,
-    salt,
-    nonce,
-    password,
-  );
-  if (!mnemonic) return false;
-  initializeKeysFromMnemonic(JSON.parse(mnemonic));
-  return true;
-}
 
-function areKeysInitialized() {
-  return Boolean(userSigningKeyPair && userEncryptionKeyPair);
+async function checkChatExists() {
+  try {
+    const provider = anchor.getProvider();
+    const accountInfo = await provider.connection.getAccountInfo(chatPDA);
+    return accountInfo !== null;
+  } catch (error) {
+    return false;
+  }
 }
 
 export {
@@ -174,4 +112,7 @@ export {
   initializeKeysFromMnemonic,
   verifyPassword,
   areKeysInitialized,
+  initializeData,
+  initializeChatData,
+  checkChatExists,
 };
