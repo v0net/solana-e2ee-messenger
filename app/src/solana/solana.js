@@ -219,8 +219,357 @@ async function getChats() {
   });
 }
 
+function subscribeToChatInitialized(onChatInitialized) {
+  if (!program) throw new Error("An error occurred");
+  if (
+    chatInitializedSubscription !== null &&
+    chatInitializedSubscription !== undefined
+  ) {
+    program.removeEventListener(chatInitializedSubscription).catch(() => {});
+    chatInitializedSubscription = null;
+  }
+  chatInitializedSubscription = program.addEventListener(
+    "chatInitialized",
+    (event) => {
+      if (!userSigningKeyPair) throw new Error("An error occurred");
+      if (
+        ![
+          event.participant1.toBase58(),
+          event.participant2.toBase58(),
+        ].includes(userSigningKeyPair.publicKey.toBase58())
+      )
+        return;
+      onChatInitialized(
+        event.participant1.toBase58() ===
+          userSigningKeyPair.publicKey.toBase58()
+          ? event.participant2.toBase58()
+          : event.participant1.toBase58(),
+      );
+    },
+  );
+}
+
+function subscribeToEncryptionKeySet(onEncryptionKeySet) {
+  if (!program) throw new Error("An error occurred");
+  if (
+    encryptionKeySetSubscription !== null &&
+    encryptionKeySetSubscription !== undefined
+  ) {
+    program.removeEventListener(encryptionKeySetSubscription).catch(() => {});
+    encryptionKeySetSubscription = null;
+  }
+  encryptionKeySetSubscription = program.addEventListener(
+    "encryptionKeySet",
+    (event) => {
+      if (!userSigningKeyPair || !userEncryptionKeyPair)
+        throw new Error("An error occurred");
+      if (
+        ![
+          event.participant1.toBase58(),
+          event.participant2.toBase58(),
+        ].includes(userSigningKeyPair.publicKey.toBase58()) ||
+        (peerSigningPublicKey &&
+          ![
+            event.participant1.toBase58(),
+            event.participant2.toBase58(),
+          ].includes(peerSigningPublicKey.toBase58()))
+      )
+        return;
+      if (
+        event.participant1.toBase58() ===
+        userSigningKeyPair.publicKey.toBase58()
+          ? event.participant1EncryptionKey !== null &&
+            event.participant2EncryptionKey !== null
+          : event.participant2EncryptionKey !== null &&
+            event.participant1EncryptionKey !== null
+      ) {
+        const peerEncryptionPublicKey =
+          event.participant1.toBase58() ===
+          userSigningKeyPair.publicKey.toBase58()
+            ? new Uint8Array(event.participant2EncryptionKey)
+            : new Uint8Array(event.participant1EncryptionKey);
+        chatSharedKey = peerEncryptionPublicKey
+          ? nacl.box.before(
+              peerEncryptionPublicKey,
+              userEncryptionKeyPair.secretKey,
+            )
+          : null;
+      }
+      onEncryptionKeySet(
+        event.participant1.toBase58() ===
+          userSigningKeyPair.publicKey.toBase58()
+          ? [
+              event.participant1EncryptionKey !== null,
+              event.participant2EncryptionKey !== null,
+            ]
+          : [
+              event.participant2EncryptionKey !== null,
+              event.participant1EncryptionKey !== null,
+            ],
+      );
+    },
+  );
+}
+
+function subscribeToMessageSent(onMessageSent) {
+  if (!program) throw new Error("An error occurred");
+  if (
+    messageSentSubscription !== null &&
+    messageSentSubscription !== undefined
+  ) {
+    program.removeEventListener(messageSentSubscription).catch(() => {});
+    messageSentSubscription = null;
+  }
+  messageSentSubscription = program.addEventListener("messageSent", (event) => {
+    if (!userSigningKeyPair || !userEncryptionKeyPair)
+      throw new Error("An error occurred");
+    if (
+      ![event.participant1.toBase58(), event.participant2.toBase58()].includes(
+        userSigningKeyPair.publicKey.toBase58(),
+      )
+    )
+      return;
+    const sharedKey = nacl.box.before(
+      event.participant1.toBase58() === userSigningKeyPair.publicKey.toBase58()
+        ? new Uint8Array(event.participant2EncryptionKey)
+        : new Uint8Array(event.participant1EncryptionKey),
+      userEncryptionKeyPair.secretKey,
+    );
+    onMessageSent(
+      event.participant1.toBase58() === userSigningKeyPair.publicKey.toBase58()
+        ? event.participant2.toBase58()
+        : event.participant1.toBase58(),
+      event.message.sender
+        ? event.participant2.toBase58()
+        : event.participant1.toBase58(),
+      decryptWithSharedKey(
+        event.message.content,
+        new Uint8Array(event.message.nonce),
+        sharedKey,
+      ),
+      parseInt(event.message.timestamp) * 1000,
+    );
+  });
+}
+
+function subscribeToChatDeleted(onChatDeleted) {
+  if (!program) throw new Error("An error occurred");
+  if (
+    chatDeletedSubscription !== null &&
+    chatDeletedSubscription !== undefined
+  ) {
+    program.removeEventListener(chatDeletedSubscription).catch(() => {});
+    chatDeletedSubscription = null;
+  }
+  chatDeletedSubscription = program.addEventListener("chatClosed", (event) => {
+    if (!userSigningKeyPair) throw new Error("An error occurred");
+    if (
+      ![event.participant1.toBase58(), event.participant2.toBase58()].includes(
+        userSigningKeyPair.publicKey.toBase58(),
+      )
+    )
+      return;
+    onChatDeleted(
+      event.participant1.toBase58() === userSigningKeyPair.publicKey.toBase58()
+        ? event.participant2.toBase58()
+        : event.participant1.toBase58(),
+    );
+  });
+}
+
+function unsubscribeFromAll() {
+  if (!program) throw new Error("An error occurred");
+  if (
+    chatInitializedSubscription !== null &&
+    chatInitializedSubscription !== undefined
+  ) {
+    program.removeEventListener(chatInitializedSubscription);
+    chatInitializedSubscription = null;
+  }
+  if (
+    encryptionKeySetSubscription !== null &&
+    encryptionKeySetSubscription !== undefined
+  ) {
+    program.removeEventListener(encryptionKeySetSubscription);
+    encryptionKeySetSubscription = null;
+  }
+  if (
+    messageSentSubscription !== null &&
+    messageSentSubscription !== undefined
+  ) {
+    program.removeEventListener(messageSentSubscription);
+    messageSentSubscription = null;
+  }
+  if (
+    chatDeletedSubscription !== null &&
+    chatDeletedSubscription !== undefined
+  ) {
+    program.removeEventListener(chatDeletedSubscription);
+    chatDeletedSubscription = null;
+  }
+}
+
+function clearSession() {
+  try {
+    unsubscribeFromAll();
+  } catch (error) {}
+  userSigningKeyPair = null;
+  peerSigningPublicKey = null;
+  userEncryptionKeyPair = null;
+  chatSharedKey = null;
+  chatPDA = null;
+}
+
+function getUserSigningPublicKey() {
+  if (!userSigningKeyPair) throw new Error("An error occurred");
+  return userSigningKeyPair.publicKey.toBase58();
+}
+
+async function checkEncryptionKeys() {
+  if (!program || !userSigningKeyPair || !userEncryptionKeyPair)
+    throw new Error("An error occurred");
+  try {
+    const chatData = await program.account.chat.fetch(chatPDA);
+    const hasUserEncryptionKey =
+      chatData.participant1.toBase58() ===
+      userSigningKeyPair.publicKey.toBase58()
+        ? chatData.participant1EncryptionKey !== null
+        : chatData.participant2EncryptionKey !== null;
+    const peerEncryptionPublicKey =
+      chatData.participant1.toBase58() ===
+      userSigningKeyPair.publicKey.toBase58()
+        ? chatData.participant2EncryptionKey
+          ? new Uint8Array(chatData.participant2EncryptionKey)
+          : null
+        : chatData.participant1EncryptionKey
+          ? new Uint8Array(chatData.participant1EncryptionKey)
+          : null;
+    chatSharedKey = peerEncryptionPublicKey
+      ? nacl.box.before(
+          peerEncryptionPublicKey,
+          userEncryptionKeyPair.secretKey,
+        )
+      : null;
+    return [hasUserEncryptionKey, peerEncryptionPublicKey !== null];
+  } catch (error) {
+    return [false, false];
+  }
+}
+
+function encryptWithSharedKey(content) {
+  if (!chatSharedKey) throw new Error("An error occurred");
+  const contentUint8 = naclUtil.decodeUTF8(content);
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+  const encryptedContent = nacl.box.after(contentUint8, nonce, chatSharedKey);
+  return {
+    encryptedContent: encryptedContent,
+    nonce: nonce,
+  };
+}
+
+function decryptWithSharedKey(encryptedContent, nonce, sharedKey = null) {
+  if (!chatSharedKey && !sharedKey) throw new Error("An error occurred");
+  const key = sharedKey || chatSharedKey;
+  const contentUint8 =
+    encryptedContent instanceof Uint8Array
+      ? encryptedContent
+      : new Uint8Array(encryptedContent);
+  const nonceUint8 =
+    nonce instanceof Uint8Array ? nonce : new Uint8Array(nonce);
+  const keyUint8 = key instanceof Uint8Array ? key : new Uint8Array(key);
+  const decryptedContentUint8 = nacl.box.open.after(
+    contentUint8,
+    nonceUint8,
+    keyUint8,
+  );
+  return decryptedContentUint8
+    ? naclUtil.encodeUTF8(decryptedContentUint8)
+    : null;
+}
+
+async function encryptWithPassword(content, password) {
+  const salt = nacl.randomBytes(16);
+  const derivedKey = await argon2.hash({
+    pass: password,
+    salt: salt,
+    time: 3,
+    mem: 65536,
+    hashLen: nacl.secretbox.keyLength,
+    parallelism: 4,
+    type: argon2.ArgonType.Argon2id,
+  });
+  const contentUint8 = naclUtil.decodeUTF8(content);
+  const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+  const encryptedContent = nacl.secretbox(contentUint8, nonce, derivedKey.hash);
+
+  return {
+    encryptedContent: naclUtil.encodeBase64(encryptedContent),
+    salt: naclUtil.encodeBase64(salt),
+    nonce: naclUtil.encodeBase64(nonce),
+  };
+}
+
+async function decryptWithPassword(encryptedContent, salt, nonce, password) {
+  const saltUint8 = naclUtil.decodeBase64(salt);
+  const derivedKey = await argon2.hash({
+    pass: password,
+    salt: saltUint8,
+    time: 3,
+    mem: 65536,
+    hashLen: nacl.secretbox.keyLength,
+    parallelism: 4,
+    type: argon2.ArgonType.Argon2id,
+  });
+  const encryptedContentUint8 = naclUtil.decodeBase64(encryptedContent);
+  const nonceUint8 = naclUtil.decodeBase64(nonce);
+
+  const decryptedContentUint8 = nacl.secretbox.open(
+    encryptedContentUint8,
+    nonceUint8,
+    derivedKey.hash,
+  );
+  return decryptedContentUint8
+    ? naclUtil.encodeUTF8(decryptedContentUint8)
+    : null;
+}
+
+function initializeKeysFromMnemonic(mnemonic) {
+  const seed = bip39.mnemonicToSeedSync(mnemonic.join(" "));
+  const derivedSigningKey = derivePath(
+    "m/44'/501'/0'/0'",
+    seed.toString("hex"),
+  ).key;
+  const derivedEncryptionKey = derivePath(
+    "m/44'/501'/0'/1'",
+    seed.toString("hex"),
+  ).key;
+  userSigningKeyPair = Keypair.fromSeed(new Uint8Array(derivedSigningKey));
+  userEncryptionKeyPair = nacl.box.keyPair.fromSecretKey(
+    new Uint8Array(derivedEncryptionKey),
+  );
+}
+
+async function verifyPassword(password) {
+  const { encryptedContent, salt, nonce } = JSON.parse(
+    localStorage.getItem("encryptedMnemonic"),
+  );
+  const mnemonic = await decryptWithPassword(
+    encryptedContent,
+    salt,
+    nonce,
+    password,
+  );
+  if (!mnemonic) return false;
+  initializeKeysFromMnemonic(JSON.parse(mnemonic));
+  return true;
+}
+
+function areKeysInitialized() {
+  return Boolean(userSigningKeyPair && userEncryptionKeyPair);
+}
 
 async function checkChatExists() {
+  if (!program || !chatPDA) throw new Error("An error occurred");
   try {
     const provider = anchor.getProvider();
     const accountInfo = await provider.connection.getAccountInfo(chatPDA);
@@ -234,18 +583,28 @@ export {
   generateMnemonic,
   isValidMnemonic,
   isValidPublicKey,
+  initializeChat,
+  sendMessage,
+  closeChat,
+  getMessages,
+  initializeChatData,
+  initializeData,
+  getChats,
   getUserSigningPublicKey,
+  checkEncryptionKeys,
+  setEncryptionKey,
   encryptWithPassword,
   decryptWithPassword,
   encryptWithSharedKey,
   decryptWithSharedKey,
   initializeKeysFromMnemonic,
   verifyPassword,
+  subscribeToChatInitialized,
+  subscribeToEncryptionKeySet,
+  subscribeToMessageSent,
+  subscribeToChatDeleted,
+  unsubscribeFromAll,
+  clearSession,
   areKeysInitialized,
-  initializeData,
-  initializeChatData,
   checkChatExists,
-  getMessages,
-  getChats,
-  checkEncryptionKeys,
 };
