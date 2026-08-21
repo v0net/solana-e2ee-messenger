@@ -1,0 +1,82 @@
+:root {
+  --primary-color: #5a70d4;
+  --primary-hover: #4a60c4;
+  --secondary-color: #834fb9;
+  --secondary-hover: #723fa9;
+  --text-color: #ffffff;
+  --text-secondary: #aaaaaa;
+  --background-dark: #181818;
+  --background-color: #212121;
+  --input-background: #282828;
+  --message-outgoing: #8774e1;
+  --message-incoming: #282828;
+  --card-border-color: #5a80d2;
+  --button-gradient: linear-gradient(
+    to right,
+    #5a70d4,
+    #834fb9,
+    #5a80d2,
+    #892ad8
+  );
+  --border-radius: 16px;
+  --transition-speed: 0.3s;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Roboto",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+  background-color: var(--background-dark);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
