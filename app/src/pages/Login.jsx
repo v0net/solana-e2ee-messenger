@@ -87,7 +87,7 @@ const Login = () => {
     ) {
       initializeKeysFromMnemonic(mnemonic);
       localStorage.setItem(
-        "encrypted_mnemonic",
+        "encryptedMnemonic",
         JSON.stringify(
           await encryptWithPassword(JSON.stringify(mnemonic), password),
         ),
