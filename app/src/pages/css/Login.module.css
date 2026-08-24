@@ -1,0 +1,226 @@
+.pageWrapper {
+  overflow: hidden;
+  font-family: "Roboto", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("../../../public/background.jpg");
+  background-attachment: fixed;
+  background-size: 1920px 1080px;
+  color: var(--text-color);
+}
+
+.container {
+  width: 100%;
+  max-width: 650px;
+  padding: 20px;
+  transform: translateY(-10%);
+}
+
+.formCard {
+  background-color: var(--background-dark);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 3px var(--card-border-color) solid;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 28px;
+  background: var(--button-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.loginTitle {
+  margin-bottom: 25px;
+}
+
+.passwordTitle {
+  margin-bottom: 10px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.mnemonicContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.mnemonicInputWrapper {
+  background-color: var(--input-background);
+  border-radius: var(--border-radius);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  border: 2px solid transparent;
+}
+
+.mnemonicInputWrapper:focus-within {
+  border-color: var(--primary-color);
+}
+
+.mnemonicInputWrapper.error {
+  border-color: red;
+}
+
+.mnemonicIndexLabel {
+  min-width: 18px;
+  margin-right: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #9e9e9e;
+}
+
+.mnemonicInput {
+  background-color: transparent;
+  border: none;
+  color: #ffffff;
+  flex-grow: 1;
+  padding: 5px;
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+}
+
+.buttonsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.button {
+  padding: 12px 0;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.button:active {
+  transform: translateY(2px);
+}
+
+.buttonPrimary {
+  background-image: var(--button-gradient);
+  background-size: 300% 100%;
+  color: white;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  transition: background-position var(--transition-speed) ease-in-out;
+}
+
+.buttonPrimary:hover {
+  background-position: 50% 0;
+}
+
+.buttonSecondary {
+  background-color: transparent;
+  border: 2px solid var(--secondary-color);
+  color: var(--text-color);
+  box-shadow: none;
+  transition: background-color var(--transition-speed) ease;
+}
+
+.buttonSecondary:hover {
+  background-color: rgba(131, 79, 185, 0.15);
+}
+
+.passwordRequirement {
+  text-align: center;
+  font-size: 16px;
+  color: #9e9e9e;
+}
+
+.passwordInputWrapper {
+  margin-bottom: 15px;
+}
+
+.passwordInputLabel {
+  margin: 12px 8px 8px 0px;
+  font-size: 16px;
+  color: #9e9e9e;
+}
+
+.passwordFieldContainer {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.passwordInput {
+  background-color: var(--input-background);
+  border-radius: var(--border-radius);
+  border: 2px solid transparent;
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  color: var(--text-color);
+  flex: 1;
+  padding-right: 40px;
+}
+
+.passwordInput:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9e9e9e;
+}
+
+.passwordToggle:active {
+  opacity: 0.7;
+}
+
+.passwordToggle .material-icons {
+  font-size: 20px;
+}
+
+.errorMessage {
+  color: red;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.buttonContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  margin-top: 25px;
+}
+
+.buttonPassword {
+  width: 50%;
+}

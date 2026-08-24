@@ -1,13 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 
 // Temporary route placeholders during initial layout wiring
-const Login = () => (
-  <div className="auth-placeholder">
-    <h2>Solana Messenger - Login</h2>
-    <p>Please enter your seed phrase or password to unlock wallet.</p>
-  </div>
-);
 const Home = () => (
   <div className="home-placeholder">
     <h2>Messenger Dashboard</h2>
