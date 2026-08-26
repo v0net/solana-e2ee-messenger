@@ -324,13 +324,7 @@ const Home = () => {
                   </div>
                 </div>
               </>
-            ) : (
-              <div className={styles.chatPlaceholder}>
-                <div className={styles.placeholderIcon}>💬</div>
-                <h3>No Active Conversation</h3>
-                <p>Select a contact or enter a public key to start encrypted chatting.</p>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       )}
