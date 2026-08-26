@@ -1,14 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-
-// Temporary route placeholders during initial layout wiring
-const Home = () => (
-  <div className="home-placeholder">
-    <h2>Messenger Dashboard</h2>
-    <p>Connect wallet to start decentralized messaging.</p>
-  </div>
-);
+import Home from "./pages/Home.jsx";
 
 function App() {
   const location = useLocation();
