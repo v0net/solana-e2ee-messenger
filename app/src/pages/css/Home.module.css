@@ -218,6 +218,376 @@
 .searchBarInput {
   background: transparent;
   border: none;
+  color: var(--text-color);
+  width: 100%;
+  outline: none;
+  font-size: 16px;
+  margin: 0 8px;
+}
+
+.menu {
+  position: absolute;
+  top: 55px;
+  background: var(--background-color);
+  border-radius: 10px;
+  list-style: none;
+  padding: 5px 0;
+  width: 180px;
+  z-index: 100;
+  font-size: 14px;
+  box-shadow:
+    0 0 2px rgba(0, 0, 0, 0.1),
+    0 0 5px rgba(0, 0, 0, 0.2),
+    0 0 10px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: top left;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
+
+.menu.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  margin: 0 5px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.menu li i {
+  margin-right: 20px;
+}
+
+.menu li:hover {
+  background-color: #333;
+}
+
+.chatsList {
+  overflow-y: auto;
+  flex-grow: 1;
+  scrollbar-width: none;
+}
+
+.chatItem {
+  display: flex;
+  padding: 12px 15px;
+  margin: 2px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chatItem.active {
+  background-color: var(--message-outgoing);
+}
+
+.chatAvatar {
+  width: 50px;
+  height: 50px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chatInfo {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chatTopLine {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.chatName {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatTime {
+  margin-left: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.chatItem.active .chatTime {
+  color: white;
+}
+
+.chatBottomLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatLastMessage {
+  max-width: 85%;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.chatItem.active .chatLastMessage {
+  color: white;
+}
+
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 15px;
+  border-bottom: 1px solid #000;
+  background-color: #212121;
+}
+
+.chatHeaderInfo {
+  display: flex;
+  flex-direction: row;
+}
+
+.chatHeaderInfo .chatAvatar {
+  width: 42px;
+  height: 42px;
+  margin-right: 16px;
+}
+
+.chatMenuToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chatMenuToggle i {
+  color: var(--text-secondary);
+}
+
+.chatMenuToggle:hover {
+  background-color: #333;
+}
+
+.chatMenu {
+  position: absolute;
+  top: 65px;
+  right: 15px;
+  background: var(--background-color);
+  border-radius: 10px;
+  list-style: none;
+  padding: 5px 0;
+  width: 180px;
+  z-index: 100;
+  font-size: 14px;
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: top right;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
+
+.chatMenu.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.chatMenu li {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  margin: 0 5px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.chatMenu li i {
+  margin-right: 20px;
+}
+
+.chatMenu li:hover {
+  background-color: #333;
+}
+
+.chatBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px 20px;
+  overflow: hidden;
+}
+
+.messagesContainer {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 15px 20px 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.messagesContainer::before {
+  content: "";
+  flex: 1;
+}
+
+.dateHeader {
+  margin: auto;
+  text-align: center;
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background-color: hsla(285, 50%, 40%, 0.3);
+  border-radius: 20px;
+}
+
+.message {
+  max-width: 75%;
+  margin: 5px 0 5px 0;
+  display: flex;
+}
+
+.message.incoming {
+  align-self: flex-start;
+}
+
+.message.outgoing {
+  align-self: flex-end;
+}
+
+.messageContent {
+  position: relative;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+}
+
+.message.incoming .messageContent {
+  background-color: var(--message-incoming);
+}
+
+.message.outgoing .messageContent {
+  background: var(--message-outgoing);
+}
+
+.messageText {
+  margin-right: 30px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.messageTime {
+  position: absolute;
+  right: 10px;
+  bottom: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.message.outgoing .messageTime {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chatInputContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px 10px;
+}
+
+.chatInputWrapper {
+  flex: 1;
+  min-width: 0;
+  background-color: var(--input-background);
+  border-radius: 16px;
+  padding: 15px;
+}
+
+.messageInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.sendButtonContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sendButton {
+  width: 50px;
+  height: 50px;
+  margin-left: 10px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s ease;
+}
+
+.sendButton i {
+  color: white;
+}
+
+.sendButton:active {
+  transform: scale(0.9);
+}
+
+.buttonStart {
+  width: 200px;
+}
+
+.buttonStart:active {
+  transition: transform 0.1s ease;
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  transform: none;
+}
 
 
 .chatPlaceholder {
