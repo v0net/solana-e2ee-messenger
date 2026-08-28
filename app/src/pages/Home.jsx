@@ -112,6 +112,98 @@ const Home = () => {
   }, [isMenuVisible]);
 
   useEffect(() => {
+    if (step !== 2) return;
+
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        initializeData();
+        setChats(await getChats());
+
+        if (!isMounted) return;
+
+        subscribeToChatInitialized((name) =>
+          setChats((prevChats) =>
+            prevChats.some((chat) => chat.name === name)
+              ? prevChats
+              : [
+                  {
+                    name: name,
+                    lastMessage: null,
+                    timestamp: null,
+                  },
+                  ...prevChats,
+                ],
+          ),
+        );
+
+        subscribeToEncryptionKeySet((encryptionKeys) =>
+          setHasEncryptionKeys(encryptionKeys),
+        );
+
+        subscribeToMessageSent((name, sender, lastMessage, timestamp) => {
+          setChats((prevChats) => {
+            const existingChat = prevChats.find((chat) => chat.name === name);
+            const chatToMove = existingChat
+              ? {
+                  ...existingChat,
+                  lastMessage: lastMessage,
+                  timestamp: timestamp,
+                }
+              : {
+                  name: name,
+                  lastMessage: lastMessage,
+                  timestamp: timestamp,
+                };
+            const otherChats = prevChats.filter((chat) => chat.name !== name);
+            return [chatToMove, ...otherChats];
+          });
+          if (activeChatRef.current && activeChatRef.current.name === name) {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                content: lastMessage,
+                timestamp: timestamp,
+                type: sender === name ? "incoming" : "outgoing",
+              },
+            ]);
+          }
+        });
+
+        subscribeToChatDeleted((name) => {
+          setChats((prevChats) =>
+            prevChats.filter((chat) => chat.name !== name),
+          );
+          if (activeChatRef.current && activeChatRef.current.name === name) {
+            activeChatRef.current = null;
+            setActiveChat(null);
+            setMessages([]);
+          }
+        });
+      } catch (error) {
+        setNotificationText(error.message);
+        setIsNotificationVisible(true);
+      }
+    };
+
+    fetchData().catch((error) => {
+      setNotificationText(error.message);
+      setIsNotificationVisible(true);
+    });
+
+    return () => {
+      try {
+        isMounted = false;
+        unsubscribeFromAll();
+      } catch (error) {
+        setNotificationText(error.message);
+        setIsNotificationVisible(true);
+      }
+    };
+  }, [step]);
+
+  useEffect(() => {
     let timeoutId;
 
     if (isNotificationVisible) {
@@ -124,6 +216,13 @@ const Home = () => {
       }
     };
   }, [isNotificationVisible]);
+
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
@@ -180,10 +279,58 @@ const Home = () => {
     }
   };
 
+  const handleSendMessage = async () => {
+    try {
+      if (!messageInput.trim()) return;
+      setMessageInput("");
+      await sendMessage(messageInput);
+    } catch (error) {
+      setNotificationText(error.message);
+      setIsNotificationVisible(true);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    try {
+      setIsChatMenuVisible(false);
+      setActiveChat(null);
+      await closeChat();
+    } catch (error) {
+      setNotificationText(error.message);
+      setIsNotificationVisible(true);
+    }
+  };
+
   const handleLogout = () => {
     clearSession();
     localStorage.clear();
     navigate("/login");
+  };
+
+  const handleSendInvite = async () => {
+    try {
+      const chatExists = await checkChatExists();
+      if (!chatExists) {
+        await initializeChat();
+      }
+      await setEncryptionKey();
+      const [hasUserKey, hasPeerKey] = await checkEncryptionKeys();
+      setHasEncryptionKeys([hasUserKey, hasPeerKey]);
+    } catch (error) {
+      setNotificationText(error.message);
+      setIsNotificationVisible(true);
+    }
+  };
+
+  const handleAcceptInvite = async () => {
+    try {
+      await setEncryptionKey();
+      const [hasUserKey, hasPeerKey] = await checkEncryptionKeys();
+      setHasEncryptionKeys([hasUserKey, hasPeerKey]);
+    } catch (error) {
+      setNotificationText(error.message);
+      setIsNotificationVisible(true);
+    }
   };
 
   const handleSubmitPassword = async () => {
@@ -322,6 +469,116 @@ const Home = () => {
                     </div>
                     <div className={styles.chatName}>{activeChat.name}</div>
                   </div>
+                  <div
+                    className={styles.chatMenuToggle}
+                    onClick={() => {
+                      setIsChatMenuVisible((prev) => !prev);
+                    }}
+                  >
+                    <i className="material-icons">more_vert</i>
+                  </div>
+                  <ul
+                    ref={chatMenuRef}
+                    className={`${styles.chatMenu} ${isChatMenuVisible ? styles.active : ""}`}
+                  >
+                    <li onClick={handleDeleteChat}>
+                      <i className="material-icons">delete</i>Delete chat
+                    </li>
+                  </ul>
+                </div>
+                <div className={styles.chatBody}>
+                  <div
+                    className={styles.messagesContainer}
+                    ref={messagesContainerRef}
+                  >
+                    {messages.map((message, index) => {
+                      const currentDate = new Date(
+                        message.timestamp,
+                      ).toLocaleDateString();
+                      const prevDate =
+                        index > 0
+                          ? new Date(
+                              messages[index - 1].timestamp,
+                            ).toLocaleDateString()
+                          : null;
+                      const showDateHeader = currentDate !== prevDate;
+
+                      return (
+                        <React.Fragment key={index}>
+                          {showDateHeader && (
+                            <div className={styles.dateHeader}>
+                              {currentDate}
+                            </div>
+                          )}
+                          <div
+                            className={`${styles.message} ${styles[message.type]}`}
+                          >
+                            <div className={styles.messageContent}>
+                              <div className={styles.messageText}>
+                                {message.content}
+                              </div>
+                              <div className={styles.messageTime}>
+                                {new Date(message.timestamp)
+                                  .toLocaleTimeString()
+                                  .slice(0, 5)}
+                              </div>
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                  {hasEncryptionKeys[0] && hasEncryptionKeys[1] ? (
+                    <div className={styles.chatInputContainer}>
+                      <div className={styles.chatInputWrapper}>
+                        <input
+                          type="text"
+                          placeholder="Message"
+                          className={styles.messageInput}
+                          value={messageInput}
+                          onChange={(e) => setMessageInput(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleSendMessage()
+                          }
+                        />
+                      </div>
+                      <div className={styles.sendButtonContainer}>
+                        <button
+                          className={styles.sendButton}
+                          onClick={handleSendMessage}
+                        >
+                          <i className="material-icons">send</i>
+                        </button>
+                      </div>
+                    </div>
+                  ) : !hasEncryptionKeys[0] && !hasEncryptionKeys[1] ? (
+                    <div className={styles.buttonContainer}>
+                      <button
+                        className={`${styles.button} ${styles.buttonPrimary} ${styles.buttonStart}`}
+                        onClick={handleSendInvite}
+                      >
+                        Invite to chat
+                      </button>
+                    </div>
+                  ) : hasEncryptionKeys[0] && !hasEncryptionKeys[1] ? (
+                    <div className={styles.buttonContainer}>
+                      <button
+                        className={`${styles.button} ${styles.buttonPrimary} ${styles.buttonStart}`}
+                        disabled
+                      >
+                        Waiting
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.buttonContainer}>
+                      <button
+                        className={`${styles.button} ${styles.buttonPrimary} ${styles.buttonStart}`}
+                        onClick={handleAcceptInvite}
+                      >
+                        Accept
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             ) : null}

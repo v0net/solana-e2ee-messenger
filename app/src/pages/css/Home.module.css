@@ -588,21 +588,3 @@
 .button:disabled {
   transform: none;
 }
-
-
-.chatPlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #718096;
-  font-size: 14px;
-  text-align: center;
-  padding: 20px;
-}
-
-.placeholderIcon {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
