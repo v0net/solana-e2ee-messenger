@@ -181,4 +181,13 @@ describe("Crypto and Anchor IDL suite", () => {
     ).toBe(plaintext);
   });
 
+  test("resets cryptographic keys and session state on logout", () => {
+    const mnemonic = generateMnemonic();
+    initializeKeysFromMnemonic(mnemonic);
+    expect(areKeysInitialized()).toBe(true);
+
+    expect(typeof clearSession).toBe("function");
+    clearSession();
+    expect(areKeysInitialized()).toBe(false);
+  });
 });

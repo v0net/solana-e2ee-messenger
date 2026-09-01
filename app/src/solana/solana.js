@@ -413,6 +413,8 @@ function clearSession() {
   try {
     unsubscribeFromAll();
   } catch (error) {}
+  userSigningKeyPair?.secretKey?.fill(0);
+  userEncryptionKeyPair?.secretKey?.fill(0);
   userSigningKeyPair = null;
   peerSigningPublicKey = null;
   userEncryptionKeyPair = null;
