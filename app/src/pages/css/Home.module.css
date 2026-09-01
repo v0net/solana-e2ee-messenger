@@ -279,11 +279,11 @@
 
 .chatItem {
   display: flex;
-  padding: 10px 14px;
+  padding: 12px 15px;
   margin: 2px 8px;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s ease;
+  transition: background-color 0.2s ease;
 }
 
 .chatItem.active {
